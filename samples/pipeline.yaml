@@ -313,6 +313,55 @@ dag:
         impersonation_chain: "{{ var.json.DATASET_FOLDER_NAME.service_account }}"
         write_disposition: "WRITE_TRUNCATE"
 
+    - operator: "DataFlowPythonOperator"
+      # Launch Cloud Dataflow jobs written in Python
+      # https://airflow.apache.org/docs/apache-airflow/1.10.15/_api/airflow/contrib/operators/dataflow_operator/index.html
+
+      # For pre-installed packages in Dataflow workers:
+      # https://cloud.google.com/dataflow/docs/concepts/sdk-worker-dependencies
+      description: "Task to run a Dataflow job"
+
+      args:
+        task_id: "sample_dataflow_operator"
+
+        # Path to the Python script containing the Apache Beam Pipeline definition.
+        # You must place the script in your pipeline's `custom` folder, for it to be
+        # uploaded to the Cloud Composer bucket (i.e. present in the Airflow file system).
+        py_file: "{{ var.json.shared.airflow_dags_folder }}/DATASET_FOLDER_NAME/PIPELINE_NAME/custom/DATAFLOW_SCRIPT_NAME.py"
+
+        dataflow_default_options:
+          project: "{{ var.json.shared.gcp_project }}"
+
+          # Required. Path for temporary files. Must be a folder in the Cloud Composer bucket.
+          # Use the recommended sample path to prevent temp file collisions.
+          temp_location: "{{ var.json.shared.composer_bucket }}/data/DATASET_FOLDER_NAME/PIPELINE_NAME/dataflow/tmp/"
+
+          # Path to the requirements.txt file containing PyPI packages that you need
+          # installed in the Dataflow worker (container). You must place the script
+          # in your pipeline's `custom` folder, for it to be uploaded to the Cloud
+          # Composer bucket (i.e. present in the Airflow file system).
+          #
+          # Note that Dataflow workers already have Python packages pre-installed:
+          # https://cloud.google.com/dataflow/docs/concepts/sdk-worker-dependencies
+          # If your package/s are already listed, you can skip this option.
+          requirements_file: "{{ var.json.shared.airflow_dags_folder }}/DATASET_FOLDER_NAME/PIPELINE_NAME/custom/requirements.txt"
+
+          # The GCS bucket path to store staging binary files used by Apache Beam
+          staging_location: "{{ var.json.shared.composer_bucket }}/data/DATASET_FOLDER_NAME/PIPELINE_NAME/dataflow/staging/"
+
+          # The pipeline runner to use. Must be set to "DataflowRunner" to run on
+          # Google Cloud Dataflow. Keep this unchanged.
+          runner: "DataflowRunner"
+
+          # The Google Compute Engine machine type, must be n1-standard-2 or higher.
+          # GCE machine types: https://cloud.google.com/compute/docs/machine-types
+          machine_type: "n1-standard-2"
+
+          # Optional. Number of workers to use when executing the Dataflow job.
+          # If not set, the Dataflow service will use a reasonable default.
+          # Important note: The value has to be a string, not int.
+          num_workers: "1"
+
   graph_paths:
     # This is where you specify the relationships (i.e. directed paths/edges)
     # among the tasks specified above. Use the bitshift operator to define the
