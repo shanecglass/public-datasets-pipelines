@@ -1,0 +1,61 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources: ~
+
+dag:
+  initialize:
+    dag_id: run_dataflow
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-07-01'
+    max_active_runs: 1
+    schedule_interval: "@once"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "DataFlowPythonOperator"
+      description: "Task to run a Dataflow job"
+      args:
+        task_id: "sample_dataflow_task"
+
+        # Path to the Python script containing the Apache Beam Pipeline definition.
+        # You must place the script your pipeline's `custom` folder, for it to be
+        # uploaded to the Cloud Composer bucket when the DAG is deployed.
+        py_file: "{{ var.json.shared.airflow_dags_folder }}/test_dataflow/run_dataflow/custom/dataflow_script.py"
+
+        dataflow_default_options:
+          project: "{{ var.json.shared.gcp_project }}"
+
+          # Required. Path for temporary files. Must be a folder in the Cloud Composer bucket.
+          # Use the recommended sample path to prevent temp file collisions.
+          temp_location: "gs://{{ var.json.shared.composer_bucket }}/data/test_dataflow/run_dataflow/dataflow/tmp/"
+
+          # The GCS bucket path to store staging binary files used by Apache Beam
+          staging_location: "gs://{{ var.json.shared.composer_bucket }}/data/test_dataflow/run_dataflow/dataflow/staging/"
+          runner: "DataflowRunner"
+          machine_type: "n1-standard-2"
+
+        options:
+          satellite: "goes-16"
+          product_type: "ABI-L1b-RadC"
+          year: "2020"
+          target_bucket: "{{ var.json.geos_fp.destination_bucket }}"
+          target_prefix: "{{ var.json.geos_fp.destination_prefix }}"
+
+  graph_paths:
+    - "sample_dataflow_task"
