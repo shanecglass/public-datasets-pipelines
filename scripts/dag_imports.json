@@ -27,6 +27,10 @@
         "GoogleCloudStorageDeleteOperator": {
             "import": "from airflow.contrib.operators import gcs_delete_operator",
             "class": "gcs_delete_operator.GoogleCloudStorageDeleteOperator"
+        },
+        "DataFlowPythonOperator": {
+            "import": "from airflow.contrib.operators import dataflow_operator",
+            "class": "dataflow_operator.DataFlowPythonOperator"
         }
     }
 }

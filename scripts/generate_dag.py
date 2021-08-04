@@ -35,6 +35,7 @@ OPERATORS = {
     "BigQueryOperator",
     "BigQueryToBigQueryOperator",
     "KubernetesPodOperator",
+    "DataFlowPythonOperator",
 }
 
 CURRENT_PATH = pathlib.Path(__file__).resolve().parent
